@@ -3,8 +3,8 @@
 Shell scripting that will knock your socks off.
 
 <p float="left">
-  <a href="https://asciinema.org/a/383254"><img src="./assets/atom-splash.png" width="50%"/></a>
-  <a href="https://asciinema.org/a/383254"><img src="./assets/atom-about.png" width="50%"/></a>
+  <a href="https://asciinema.org/a/383254"><img src="./assets/atom-splash.png" width="48%"/></a>
+  <a href="https://asciinema.org/a/383254"><img src="./assets/atom-about.png" width="48%"/></a>
 </p>
 
 ##### _NOTE: Click the image above for a video demonstration._
