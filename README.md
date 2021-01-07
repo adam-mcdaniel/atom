@@ -6,7 +6,6 @@ Shell scripting that will knock your socks off.
   <a href="https://asciinema.org/a/383254"><img src="./assets/atom-splash.png" width="45%"/></a>
   <a href="https://asciinema.org/a/383254"><img src="./assets/atom-about.png" width="45%"/></a>
 </p>
-(https://asciinema.org/a/383254)
 
 ##### _NOTE: Click the image above for a video demonstration._
 
