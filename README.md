@@ -2,7 +2,7 @@
 
 A cross platform shell meant for powerful scripting.
 
-![Atom Login](./assets/atom-shell2.png)
+[![asciicast](https://asciinema.org/a/383254.png)](https://asciinema.org/a/383254)
 
 # Why write a shell?
 
