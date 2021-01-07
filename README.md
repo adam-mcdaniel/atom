@@ -2,10 +2,9 @@
 
 Shell scripting that will knock your socks off.
 
-<!-- [![Splash](./assets/atom-splash.png)](https://asciinema.org/a/383254) [![About](./assets/atom-about.png)] -->
 <p float="left">
-  <a href="https://asciinema.org/a/383254"><img src="./assets/atom-splash.png" width="40%" /></a>
-  <a href="https://asciinema.org/a/383254"><img src="./assets/atom-about.png" width="40%" /></a>
+  <a href="https://asciinema.org/a/383254"><img src="./assets/atom-splash.png" width="45%"/></a>
+  <a href="https://asciinema.org/a/383254"><img src="./assets/atom-about.png" width="45%"/></a>
 </p>
 (https://asciinema.org/a/383254)
 
