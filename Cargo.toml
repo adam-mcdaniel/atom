@@ -1,0 +1,28 @@
+[package]
+name = "atom"
+version = "0.1.0"
+authors = ["Adam McDaniel <adam.mcdaniel17@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "atom"
+path = "src/bin.rs"
+
+[build-dependencies]
+lalrpop = { version = "0.19", features = ["lexer"] }
+
+[dependencies]
+lalrpop = { version = "0.19", features = ["lexer"] }
+lalrpop-util = "0.19"
+regex = "1"
+rustyline = "7.1"
+rustyline-derive = "0.4"
+os_info = "3.0"
+dirs = "3.0"
+dunce = "1.0"
+chrono = "0.4"
+asciicolor = "0.1"
+ctrlc = "3.1"
+rand = "0.8"
+lazy_static = "1.4"

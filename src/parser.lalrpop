@@ -1,0 +1,285 @@
+use std::{collections::BTreeMap, path::PathBuf};
+use super::{Value, Size, Environment};
+grammar();
+
+match {
+    "fn",
+    "macro",
+    "to",
+    "if",
+    "else",
+    "for",
+    "in",
+    "while",
+
+    "nil",
+    "true",
+    "truth",
+    "false",
+
+    "nand",
+    "and",
+    "or",
+    "nor",
+    "not",
+    "is",
+
+    "gb",
+    "mb",
+    "kb",
+    "bytes",
+
+    "neg",
+    "~",
+    "-",
+    "+",
+    "*",
+    "/",
+    "%",
+
+    r"[+-]?(0|([1-9]\d*))" => IntegerString
+} else {
+    r"[+-]?((\d+([.]\d*)?([eE][+-]?\d+)?|[.]\d+([eE][+-]?\d+)?))" => FloatString
+} else {
+    r#""(\\.|[^"])*""# => RawString,
+    // r#"("(\\.|[^"])*")|('(\\.|[^'])*')"# => RawString,
+    r"[a-zA-Z_\./\-\+\*$][a-zA-Z0-9_\./\-\+\*$]*" => Symbol,
+    _
+}
+
+pub Program: Value = <stmts:(Statement ";")*> <last:Statement?> => {
+    let mut stmts = stmts.iter().map(|(x, _)| x.clone()).collect::<Vec<Value>>();
+    if let Some(val) = last {
+        stmts.push(val);
+    }
+    Value::Do(stmts)
+};
+
+Block: Vec<Value> = NonEmptyList<"{", Statement, ";", "}">;
+
+Statement: Value = {
+    <func: Expression> "'" <args:ExpressionPrecedence0*> => Value::Run(Box::new(func), args),
+    <func: Expression> "`" <args:ExpressionPrecedence0*> => Value::Run(Box::new(func), args),
+
+    Expression => <>
+}
+
+Expression: Value = {
+    ExpressionPrecedence9 => <>
+}
+
+ExpressionPrecedence9: Value = {
+    "(" ")" "->" <body:Expression> => Value::Lambda(vec![], Box::new(body), Environment::new()),
+    "fn" <params:List<"(", Symbol, ",", ")">> "->" <body:Expression> => Value::Lambda(params.iter().map(ToString::to_string).collect::<Vec<String>>(), Box::new(body), Environment::new()),
+    "fn" <name:Symbol> <params:List<"(", Symbol, ",", ")">> <body:Block> => Value::Define(name.to_string(), Box::new(Value::Lambda(params.iter().map(ToString::to_string).collect::<Vec<String>>(), Box::new(Value::Do(body)), Environment::new()))),
+    "macro" <params:List<"(", Symbol, ",", ")">> "->" <mut body:Expression> => {
+        if let Value::Scope(exprs) = body.clone() {
+            body = Value::Do(exprs);
+        }
+        Value::Macro(params.iter().map(ToString::to_string).collect::<Vec<String>>(), Box::new(body))
+    },
+    "macro" <name:Symbol> <params:List<"(", Symbol, ",", ")">> <body:Block> => Value::Define(name.to_string(), Box::new(Value::Macro(params.iter().map(ToString::to_string).collect::<Vec<String>>(), Box::new(Value::Do(body))))),
+    
+    <param:Symbol> "->" <body:Expression> => Value::Lambda(vec![param.to_string()], Box::new(body), Environment::new()),
+    <params:List<"\\", Symbol, ",", "->">> <body:Expression> => Value::Lambda(params.iter().map(ToString::to_string).collect::<Vec<String>>(), Box::new(body), Environment::new()),
+
+    ExpressionPrecedence8 => <>
+}
+
+ExpressionPrecedence8: Value = {
+    <cond:ExpressionPrecedence7> "?" <a:ExpressionPrecedence8> ":" <b:ExpressionPrecedence8> => Value::Conditional(Box::new(cond), Box::new(a), Box::new(b)),
+
+    "for" <name:Symbol> "in" <iter:Expression> <body:Block> => {
+        Value::For(name.to_string(), Box::new(iter), Box::new(Value::Do(body)))
+    },
+
+    "while" <cond:Expression> <body:Block> => {
+        Value::While(Box::new(cond), Box::new(Value::Do(body)))
+    },
+
+    "if" <cond:Expression> <then_do:Block> <else_do_opt:("else" Block)?> => {
+        Value::If(
+            Box::new(cond),
+            Box::new(Value::Do(then_do)),
+            Box::new(match else_do_opt {
+                Some((_, block)) => Value::Do(block),
+                None => Value::Nil
+            })
+        )
+    },
+
+    "if" <cond:Expression> <then_do:Block> <mut elifs:("else" "if" Expression Block)+> <else_do_opt:("else" Block)?> => {
+        let mut else_body = match else_do_opt {
+            Some((_, block)) => Value::Do(block),
+            None => Value::Nil
+        };
+
+        elifs.reverse();
+        for (_, _, elif_cond, elif_body) in elifs {
+            else_body = Value::If(
+                Box::new(elif_cond),
+                Box::new(Value::Do(elif_body)),
+                Box::new(else_body)
+            );
+        }
+
+        Value::If(
+            Box::new(cond),
+            Box::new(Value::Do(then_do)),
+            Box::new(else_body)
+        )
+    },
+
+    
+
+    <name:Symbol> ":=" <val:Expression> => Value::Define(name.to_string(), Box::new(val)),
+
+    ExpressionPrecedence7 => <>
+}
+
+ExpressionPrecedence7: Value = {
+    // <a:ExpressionPrecedence4> "and" <b:ExpressionPrecedence5> => Value::And(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence6> "nor" <b:ExpressionPrecedence7> => Value::Not(Box::new(Value::Or(Box::new(a), Box::new(b)))),
+    <a:ExpressionPrecedence6> "or" <b:ExpressionPrecedence7> => Value::Or(Box::new(a), Box::new(b)),
+    ExpressionPrecedence6 => <>
+}
+
+ExpressionPrecedence6: Value = {
+    // <a:ExpressionPrecedence3> "or" <b:ExpressionPrecedence4> => Value::Or(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence5> "and" <b:ExpressionPrecedence6> => Value::And(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence5> "nand" <b:ExpressionPrecedence6> => Value::Not(Box::new(Value::And(Box::new(a), Box::new(b)))),
+    ExpressionPrecedence5 => <>
+}
+
+ExpressionPrecedence5: Value = {
+    "not" <ExpressionPrecedence5> => Value::Not(Box::new(<>)),
+    <a:ExpressionPrecedence4> "<"  <b:ExpressionPrecedence4> => Value::Less(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence4> "<=" <b:ExpressionPrecedence4> => Value::LessEqual(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence4> ">"  <b:ExpressionPrecedence4> => Value::Greater(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence4> ">=" <b:ExpressionPrecedence4> => Value::GreaterEqual(Box::new(a), Box::new(b)),
+    ExpressionPrecedence4 => <>
+}
+
+ExpressionPrecedence4: Value = {
+    <a:ExpressionPrecedence3> "is" <b:ExpressionPrecedence3> => Value::Equal(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence3> "=" <b:ExpressionPrecedence3>  => Value::Equal(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence3> "is" "not" <b:ExpressionPrecedence3> => Value::NotEqual(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence3> "!=" <b:ExpressionPrecedence3> => Value::NotEqual(Box::new(a), Box::new(b)),
+    ExpressionPrecedence3 => <>
+}
+
+ExpressionPrecedence3: Value = {
+    <a:ExpressionPrecedence2> "+" <b:ExpressionPrecedence3> => Value::Add(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence2> "-" <b:ExpressionPrecedence3> => Value::Subtract(Box::new(a), Box::new(b)),
+    ExpressionPrecedence2 => <>
+}
+
+ExpressionPrecedence2: Value = {
+    "~" <ExpressionPrecedence2> => Value::Negate(Box::new(<>)),
+    "neg" <ExpressionPrecedence2> => Value::Negate(Box::new(<>)),
+    <a:ExpressionPrecedence1> "*" <b:ExpressionPrecedence2> => Value::Multiply(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence1> "/" <b:ExpressionPrecedence2> => Value::Divide(Box::new(a), Box::new(b)),
+    <a:ExpressionPrecedence1> "%" <b:ExpressionPrecedence2> => Value::Remainder(Box::new(a), Box::new(b)),
+    ExpressionPrecedence1 => <>
+}
+
+ExpressionPrecedence1: Value = {
+    <func: ExpressionPrecedence0> <mut multi_args:("[" Expression "]")+> => {
+        let mut result = func;
+        multi_args.reverse();
+        while !multi_args.is_empty() {
+            result = Value::Index(Box::new(result), Box::new(multi_args.pop().unwrap().1));
+        }
+        result
+    },
+    
+    <func: ExpressionPrecedence0> <mut multi_args:List<"(", Expression, ",", ")">+> => {
+        let mut result = func;
+        multi_args.reverse();
+        while !multi_args.is_empty() {
+            result = Value::Apply(Box::new(result), multi_args.pop().unwrap());
+        }
+        result
+    },
+    
+    ExpressionPrecedence0 => <>
+}
+
+ExpressionPrecedence0: Value = {
+    <func: ExpressionAtom> <mut multi_args:("@" Symbol)+> => {
+        let mut result = func;
+        multi_args.reverse();
+        while !multi_args.is_empty() {
+            result = Value::Index(Box::new(result), Box::new(Value::String(multi_args.pop().unwrap().1.to_string())));
+        }
+        result
+    },
+    
+    <a:ExpressionAtom> "to" <b:ExpressionAtom> => Value::Range(Box::new(a), Box::new(b)),
+
+    ExpressionAtom => <>
+}
+
+ExpressionAtom: Value = {
+    Block => Value::Scope(<>),
+    "(" ")" => Value::Nil,
+
+    "(" <Expression> ")" => Value::Grouped(Box::new(<>)),
+
+    "nil"   => Value::Nil,
+    "true"  => Value::Boolean(true),
+    "truth" => Value::Boolean(true),
+    "false" => Value::Boolean(false),
+
+    "/" => Value::Path(PathBuf::from("/")),
+
+    <Float>   "gb" => Value::Size(Size::from_gigabytes(<>)),
+    <Integer> "gb" => Value::Size(Size::from_gigabytes(<> as f64)),
+
+    <Float>   "mb" => Value::Size(Size::from_megabytes(<>)),
+    <Integer> "mb" => Value::Size(Size::from_megabytes(<> as f64)),
+
+    <Float>   "kb" => Value::Size(Size::from_kilobytes(<>)),
+    <Integer> "kb" => Value::Size(Size::from_kilobytes(<> as f64)),
+
+    <Integer> "bytes" => Value::Size(Size::from_bytes(<> as usize)),
+
+    Symbol  => Value::Symbol(<>.to_string()),
+    Integer => Value::Integer(<>),
+    Float   => Value::Float(<>),
+    String  => Value::String(<>),
+    List<"[", Expression, ",", "]"> => Value::List(<>),
+    List<"{", <(String ":" Expression)>, ",", "}"> => {
+        let mut result = BTreeMap::new();
+        for (key, _, val) in <> {
+            result.insert(key, val);
+        }
+        Value::Table(result)
+    },
+}
+
+
+String: String = RawString => String::from(&<>[1..<>.len()-1]).replace("\\\\", "\\").replace("\\\"", "\"").replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t").replace("\\v", &String::from(13 as char)).replace("\\a", &String::from(7 as char)).replace("\\b", &String::from(8 as char));
+Float:   f64 = FloatString   => <>.parse::<f64>().unwrap();
+Integer: i32 = IntegerString => <>.parse::<i32>().unwrap();
+
+List<Begin, T, Sep, End>: Vec<T> = {
+    <first:Begin> <list: (<T> <Sep>)*> <end:T?> <last:End> => {
+        match end {
+            None => list.iter().map(|(v, s)| v.clone()).collect(),
+            Some(val) => {
+                let mut list: Vec<_> = list.iter().map(|(v, s)| v.clone()).collect();
+                list.push(val);
+                list
+            }
+        }
+    }
+}
+
+NonEmptyList<Begin, T, Sep, End>: Vec<T> = {
+    <first:Begin> <list: (<T> <Sep>)*> <end:T> Sep? <last:End> => {
+        let mut list: Vec<_> = list.iter().map(|(v, s)| v.clone()).collect();
+        list.push(end);
+        list
+    }
+}
