@@ -69,7 +69,7 @@ To show Atom's scripting capabilities, I wrote an entire card game using it!
 
 The CPU is actually much better than I am, and has beaten me with twice or thrice my score multiple times.
 
-If you want to try all of my custom macros, and to have my splash screen, use my `.atom-prelude` file in your home directory and experiment away!
+If you want to try all of my custom macros, and to have my splash screen, use my `.atom-prelude` file in your home directory and experiment away! To play my card game specifically, run `rummy@play'`.
 
 ## Usage
 

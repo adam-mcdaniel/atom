@@ -21,6 +21,19 @@
 #     \/_/  \/_/ \/____/\/____/ \/___/  \/__,_ /\/____/
 #
 #
+# Overview:
+#   Splash screen:
+#     welcome() # Prints splash screen
+#   Rummy commands:
+#     rummy@play()
+#   Calendar widget:
+#     cal()
+#   Cat widget:
+#     cats()
+#   Todo app commands:
+#     todo@add("Add a task")
+#     todo@rm(3)    # Finish task no. 3
+#     todo@clear()  # Clear todo list
 #
 # Have fun, scripters!
 
