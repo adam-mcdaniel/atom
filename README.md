@@ -9,6 +9,12 @@ Shell scripting that will knock your socks off.
 
 ##### _NOTE: Click the image above for a video demonstration._
 
+## About the Author
+
+I'm a freshman in college bored in quarantine. If you enjoy my projects, consider supporting me by buying me a coffee! 
+
+<a href="https://www.buymeacoffee.com/adammcdaniel" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-violet.png" height=41px width=174px style="!important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+
 ## Why write a shell?
 
 [Bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) is everywhere in the programming world. Literally _everywhere_. If you download and install this project, you will likely use bash to do so _(or some bash derivative / compatible shell)_.
@@ -70,12 +76,6 @@ To show Atom's scripting capabilities, I wrote an entire card game using it!
 The CPU is actually much better than I am, and has beaten me with twice or thrice my score multiple times. It doesn't cheat at all, it only ranks its cards by synergy, encourages picking up cards that synergize well with its best cards, and discarding its worst cards.
 
 If you want to try all of my custom macros, and to have my splash screen, use my `.atom-prelude` file in your home directory and experiment away! To play my card game specifically, run `rummy@play'`.
-
-## About the Author
-
-I'm a freshman in college bored in quarantine. If you enjoy my projects, consider supporting me by buying me a coffee! 
-
-<a href="https://www.buymeacoffee.com/adammcdaniel" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-violet.png" height=41px width=174px style="!important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
 ## Usage
 
