@@ -118,7 +118,7 @@ and then run it like so: `"g++"' main.cpp -o main`.
 
 This also means that you can make aliases rather simply by defining a symbol with a string or a path.
 
-This snippet defines `ls` as an alias for the [`lsd`](https://github.com/Peltoche/lsd) program, and `cat` as an alias for the [`bat`](https://github.com/sharkdp/bat) program.
+This snippet defines `ls` as an alias for the [`lsd`](https://github.com/Peltoche/lsd) program:
 ```python
 ls := "lsd";
 ls';
@@ -164,7 +164,7 @@ Now let's try to do some fun stuff with lambdas.
 
 ```haskell
 min := \x,y -> x < y? x : y;
-max := fn(x, y) -> x < y? x : y;
+max := fn(x, y) -> x > y? x : y;
 
 # You can put brackets around the lambda body for multiple statements
 return-five :=   () -> { print("returning 5"); 5 };
