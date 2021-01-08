@@ -1,4 +1,4 @@
-pub const VERSION: &[usize] = &[0, 1, 0];
+pub const VERSION: &[usize] = &[0, 1, 1];
 pub const PRELUDE_FILENAME: &str = ".atom-prelude";
 pub const HISTORY_FILENAME: &str = ".atom-history";
 use std::cmp::min;
