@@ -383,3 +383,10 @@ To get the current release build, install from [crates.io](https://crates.io/cra
 # Also works for updating atomsh
 cargo install -f atomsh
 ```
+
+#### After Install
+
+```bash
+# Just run the atom executable!
+atom
+```
