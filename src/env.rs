@@ -651,6 +651,204 @@ lazy_static! {
 
         Value::Table(chess)
     };
+
+    static ref FMT: Value = {
+        let mut colorize = BTreeMap::new();
+        let mut dark = BTreeMap::new();
+        macro_rules! make_color {
+            ($color:expr) => {|args, env| {
+                let mut result = String::new();
+                for (i, arg) in args.iter().enumerate() {
+                    result += &format!("{}", arg.eval(env)?);
+                    if i < args.len()-1 {
+                        result += " ";
+                    }
+                }
+                
+                Ok(Value::String($color(result)))
+            }};
+        }
+
+        dark.insert(String::from("red"), Value::builtin("fmt@dark@red", make_color!(Colorize::red)));
+        dark.insert(String::from("green"), Value::builtin("fmt@dark@green", make_color!(Colorize::green)));
+        dark.insert(String::from("blue"), Value::builtin("fmt@dark@blue", make_color!(Colorize::blue)));
+        dark.insert(String::from("cyan"), Value::builtin("fmt@dark@cyan", make_color!(Colorize::cyan)));
+        dark.insert(String::from("yellow"), Value::builtin("fmt@dark@yellow", make_color!(Colorize::yellow)));
+        dark.insert(String::from("magenta"), Value::builtin("fmt@dark@magenta", make_color!(Colorize::magenta)));
+        colorize.insert(String::from("dark"), Value::Table(dark));
+        
+        colorize.insert(String::from("red"), Value::builtin("fmt@red", make_color!(Colorize::bright_red)));
+        colorize.insert(String::from("green"), Value::builtin("fmt@green", make_color!(Colorize::bright_green)));
+        colorize.insert(String::from("blue"), Value::builtin("fmt@blue", make_color!(Colorize::bright_blue)));
+        colorize.insert(String::from("yellow"), Value::builtin("fmt@yellow", make_color!(Colorize::bright_yellow)));
+        colorize.insert(String::from("magenta"), Value::builtin("fmt@magenta", make_color!(Colorize::bright_magenta)));
+        colorize.insert(String::from("cyan"), Value::builtin("fmt@cyan", make_color!(Colorize::bright_cyan)));
+        colorize.insert(String::from("black"), Value::builtin("fmt@black", make_color!(Colorize::black)));
+        colorize.insert(String::from("gray"), Value::builtin("fmt@gray", make_color!(Colorize::bright_black)));
+        colorize.insert(String::from("grey"), Value::builtin("fmt@grey", make_color!(Colorize::bright_black)));
+        colorize.insert(String::from("white"), Value::builtin("fmt@white", make_color!(Colorize::bright_white)));
+
+        colorize.insert(String::from("bold"), Value::builtin("fmt@bold", make_color!(Colorize::bold)));
+        colorize.insert(String::from("invert"), Value::builtin("fmt@invert", make_color!(Colorize::invert)));
+        colorize.insert(String::from("underline"), Value::builtin("fmt@underline", make_color!(Colorize::underline)));
+        
+        Value::Table(colorize)
+    };
+
+    static ref MATH: Value = {
+        let mut math = BTreeMap::new();
+        math.insert("E".to_string(), Value::Float(std::f64::consts::E));
+        math.insert("PI".to_string(), Value::Float(std::f64::consts::PI));
+        math.insert("TAU".to_string(), Value::Float(std::f64::consts::TAU));
+
+        math.insert("pow".to_string(), Value::builtin("pow", |args, env| {
+            check_args_len(Value::symbol("math@pow"), &args, 2)?;
+
+            match args[0].eval(env)? {
+                Value::Float(base) => {
+                    match args[1].eval(env)? {
+                        Value::Float(n)   => Ok(Value::Float(base.powf(n))),
+                        Value::Integer(n) => Ok(Value::Float(base.powi(n))),
+                        _ => Err(Error::InvalidArguments(Value::symbol("math@pow"), args.clone()))
+                    }
+                }
+                Value::Integer(base) => {
+                    match args[1].eval(env)? {
+                        Value::Float(n)   => Ok(Value::Float((base as f64).powf(n))),
+                        Value::Integer(n) if n > 0 => Ok(Value::Integer(base.pow(n as u32))),
+                        Value::Integer(n) => Ok(Value::Float((base as f64).powi(n))),
+                        _ => Err(Error::InvalidArguments(Value::symbol("math@pow"), args.clone()))
+                    }
+                }
+                _ => Err(Error::InvalidArguments(Value::symbol("math@pow"), args.clone()))
+            }
+        }));
+
+        math.insert("log".to_string(), Value::builtin("log", |args, env| {
+            check_args_len(Value::symbol("math@log"), &args, 2)?;
+
+            let base = match args[0].eval(env)? {
+                Value::Float(n)   => Ok(n),
+                Value::Integer(n) => Ok(n as f64),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@log"), args.clone()))
+            }?;
+
+            let x = match args[1].eval(env)? {
+                Value::Float(n)   => Ok(n),
+                Value::Integer(n) => Ok(n as f64),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@log"), args.clone()))
+            }?;
+            
+            Ok(Value::Float(x.log(base)))
+        }));
+
+        math.insert("log10".to_string(), Value::builtin("log10", |args, env| {
+            check_args_len(Value::symbol("math@log10"), &args, 1)?;
+
+            let x = match args[0].eval(env)? {
+                Value::Float(n)   => Ok(n),
+                Value::Integer(n) => Ok(n as f64),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@log10"), args.clone()))
+            }?;
+            
+            Ok(Value::Float(x.log10()))
+        }));
+
+        math.insert("log2".to_string(), Value::builtin("log2", |args, env| {
+            check_args_len(Value::symbol("math@log2"), &args, 1)?;
+
+            let x = match args[0].eval(env)? {
+                Value::Float(n)   => Ok(n),
+                Value::Integer(n) => Ok(n as f64),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@log2"), args.clone()))
+            }?;
+            
+            Ok(Value::Float(x.log2()))
+        }));
+
+        math.insert("sqrt".to_string(), Value::builtin("sqrt", |args, env| {
+            check_args_len(Value::symbol("math@sqrt"), &args, 1)?;
+
+            match args[0].eval(env)? {
+                Value::Float(n)   => Ok(Value::Float(n.sqrt())),
+                Value::Integer(n) => Ok(Value::Float((n as f64).sqrt())),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@sqrt"), args.clone()))
+            }
+        }));
+
+
+        math.insert("cbrt".to_string(), Value::builtin("cbrt", |args, env| {
+            check_args_len(Value::symbol("math@cbrt"), &args, 1)?;
+
+            match args[0].eval(env)? {
+                Value::Float(n)   => Ok(Value::Float(n.cbrt())),
+                Value::Integer(n) => Ok(Value::Float((n as f64).cbrt())),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@cbrt"), args.clone()))
+            }
+        }));
+
+        math.insert("sin".to_string(), Value::builtin("sin", |args, env| {
+            check_args_len(Value::symbol("math@sin"), &args, 1)?;
+
+            match args[0].eval(env)? {
+                Value::Float(n)   => Ok(Value::Float(n.sin())),
+                Value::Integer(n) => Ok(Value::Float((n as f64).sin())),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@sin"), args.clone()))
+            }
+        }));
+
+        math.insert("cos".to_string(), Value::builtin("cos", |args, env| {
+            check_args_len(Value::symbol("math@cos"), &args, 1)?;
+
+            match args[0].eval(env)? {
+                Value::Float(n)   => Ok(Value::Float(n.cos())),
+                Value::Integer(n) => Ok(Value::Float((n as f64).cos())),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@cos"), args.clone()))
+            }
+        }));
+
+        math.insert("tan".to_string(), Value::builtin("tan", |args, env| {
+            check_args_len(Value::symbol("math@tan"), &args, 1)?;
+
+            match args[0].eval(env)? {
+                Value::Float(n)   => Ok(Value::Float(n.tan())),
+                Value::Integer(n) => Ok(Value::Float((n as f64).tan())),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@tan"), args.clone()))
+            }
+        }));
+
+        math.insert("asin".to_string(), Value::builtin("asin", |args, env| {
+            check_args_len(Value::symbol("math@asin"), &args, 1)?;
+
+            match args[0].eval(env)? {
+                Value::Float(n)   => Ok(Value::Float(n.asin())),
+                Value::Integer(n) => Ok(Value::Float((n as f64).asin())),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@asin"), args.clone()))
+            }
+        }));
+
+        math.insert("acos".to_string(), Value::builtin("acos", |args, env| {
+            check_args_len(Value::symbol("math@acos"), &args, 1)?;
+
+            match args[0].eval(env)? {
+                Value::Float(n)   => Ok(Value::Float(n.acos())),
+                Value::Integer(n) => Ok(Value::Float((n as f64).acos())),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@acos"), args.clone()))
+            }
+        }));
+
+        math.insert("atan".to_string(), Value::builtin("atan", |args, env| {
+            check_args_len(Value::symbol("math@atan"), &args, 1)?;
+
+            match args[0].eval(env)? {
+                Value::Float(n)   => Ok(Value::Float(n.atan())),
+                Value::Integer(n) => Ok(Value::Float((n as f64).atan())),
+                _ => Err(Error::InvalidArguments(Value::symbol("math@atan"), args.clone()))
+            }
+        }));
+
+        Value::Table(math)
+    };
 }
 
 #[derive(Clone)]
@@ -1127,49 +1325,9 @@ impl Environment {
 
                     Value::Table(widget)
                 },
-                "fmt" => {
-                    let mut colorize = BTreeMap::new();
-                    let mut dark = BTreeMap::new();
-                    macro_rules! make_color {
-                        ($color:expr) => {|args, env| {
-                            let mut result = String::new();
-                            for (i, arg) in args.iter().enumerate() {
-                                result += &format!("{}", arg.eval(env)?);
-                                if i < args.len()-1 {
-                                    result += " ";
-                                }
-                            }
-                            
-                            Ok(Value::String($color(result)))
-                        }};
-                    }
 
-                    dark.insert(String::from("red"), Value::builtin("dark-red", make_color!(Colorize::red)));
-                    dark.insert(String::from("green"), Value::builtin("dark-green", make_color!(Colorize::green)));
-                    dark.insert(String::from("blue"), Value::builtin("dark-blue", make_color!(Colorize::blue)));
-                    dark.insert(String::from("cyan"), Value::builtin("dark-cyan", make_color!(Colorize::cyan)));
-                    dark.insert(String::from("yellow"), Value::builtin("dark-yellow", make_color!(Colorize::yellow)));
-                    dark.insert(String::from("magenta"), Value::builtin("dark-magenta", make_color!(Colorize::magenta)));
-                    
-                    colorize.insert(String::from("red"), Value::builtin("red", make_color!(Colorize::bright_red)));
-                    colorize.insert(String::from("green"), Value::builtin("green", make_color!(Colorize::bright_green)));
-                    colorize.insert(String::from("blue"), Value::builtin("blue", make_color!(Colorize::bright_blue)));
-                    colorize.insert(String::from("yellow"), Value::builtin("yellow", make_color!(Colorize::bright_yellow)));
-                    colorize.insert(String::from("magenta"), Value::builtin("magenta", make_color!(Colorize::bright_magenta)));
-                    colorize.insert(String::from("cyan"), Value::builtin("cyan", make_color!(Colorize::bright_cyan)));
-                    colorize.insert(String::from("black"), Value::builtin("black", make_color!(Colorize::black)));
-                    colorize.insert(String::from("gray"), Value::builtin("gray", make_color!(Colorize::bright_black)));
-                    colorize.insert(String::from("grey"), Value::builtin("grey", make_color!(Colorize::bright_black)));
-                    colorize.insert(String::from("white"), Value::builtin("white", make_color!(Colorize::bright_white)));
-
-                    colorize.insert(String::from("dark"), Value::Table(dark));
-
-                    colorize.insert(String::from("bold"), Value::builtin("bold", make_color!(Colorize::bold)));
-                    colorize.insert(String::from("invert"), Value::builtin("invert", make_color!(Colorize::invert)));
-                    colorize.insert(String::from("underline"), Value::builtin("underline", make_color!(Colorize::underline)));
-                    
-                    Value::Table(colorize)
-                }
+                "fmt" => FMT.clone(),
+                "math" => MATH.clone(),
 
                 "sleep" => Value::builtin("sleep", |args, env| {
                     check_args_len(env.get("sleep")?, &args, 1)?;
@@ -1183,160 +1341,12 @@ impl Environment {
                     Ok(Value::Nil)
                 }),
 
-                "PI" => Value::Float(std::f64::consts::PI),
-                "TAU" => Value::Float(std::f64::consts::TAU),
-                "EULER" => Value::Float(std::f64::consts::E),
-                
-                "pow" => Value::builtin("pow", |args, env| {
-                    check_args_len(env.get("pow")?, &args, 2)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(base) => {
-                            match args[1].eval(env)? {
-                                Value::Float(n)   => Ok(Value::Float(base.powf(n))),
-                                Value::Integer(n) => Ok(Value::Float(base.powi(n))),
-                                _ => Err(Error::InvalidArguments(env.get("pow")?, args.clone()))
-                            }
-                        }
-                        Value::Integer(base) => {
-                            match args[1].eval(env)? {
-                                Value::Float(n)   => Ok(Value::Float((base as f64).powf(n))),
-                                Value::Integer(n) if n > 0 => Ok(Value::Integer(base.pow(n as u32))),
-                                Value::Integer(n) => Ok(Value::Float((base as f64).powi(n))),
-                                _ => Err(Error::InvalidArguments(env.get("pow")?, args.clone()))
-                            }
-                        }
-                        _ => Err(Error::InvalidArguments(env.get("pow")?, args.clone()))
-                    }
-                }),
-
-                "log" => Value::builtin("log", |args, env| {
-                    check_args_len(env.get("log")?, &args, 2)?;
-
-                    let base = match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(n),
-                        Value::Integer(n) => Ok(n as f64),
-                        _ => Err(Error::InvalidArguments(env.get("log")?, args.clone()))
-                    }?;
-
-                    let x = match args[1].eval(env)? {
-                        Value::Float(n)   => Ok(n),
-                        Value::Integer(n) => Ok(n as f64),
-                        _ => Err(Error::InvalidArguments(env.get("log")?, args.clone()))
-                    }?;
-                    
-                    Ok(Value::Float(x.log(base)))
-                }),
-
-                "log10" => Value::builtin("log10", |args, env| {
-                    check_args_len(env.get("log10")?, &args, 1)?;
-
-                    let x = match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(n),
-                        Value::Integer(n) => Ok(n as f64),
-                        _ => Err(Error::InvalidArguments(env.get("log")?, args.clone()))
-                    }?;
-                    
-                    Ok(Value::Float(x.log10()))
-                }),
-
-                "log2" => Value::builtin("log2", |args, env| {
-                    check_args_len(env.get("log2")?, &args, 1)?;
-
-                    let x = match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(n),
-                        Value::Integer(n) => Ok(n as f64),
-                        _ => Err(Error::InvalidArguments(env.get("log")?, args.clone()))
-                    }?;
-                    
-                    Ok(Value::Float(x.log2()))
-                }),
-
-                "sqrt" => Value::builtin("sqrt", |args, env| {
-                    check_args_len(env.get("sqrt")?, &args, 1)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(Value::Float(n.sqrt())),
-                        Value::Integer(n) => Ok(Value::Float((n as f64).sqrt())),
-                        _ => Err(Error::InvalidArguments(env.get("sqrt")?, args.clone()))
-                    }
-                }),
-
-                "cbrt" => Value::builtin("cbrt", |args, env| {
-                    check_args_len(env.get("cbrt")?, &args, 1)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(Value::Float(n.cbrt())),
-                        Value::Integer(n) => Ok(Value::Float((n as f64).cbrt())),
-                        _ => Err(Error::InvalidArguments(env.get("cbrt")?, args.clone()))
-                    }
-                }),
-
-                "sin" => Value::builtin("sin", |args, env| {
-                    check_args_len(env.get("sin")?, &args, 1)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(Value::Float(n.sin())),
-                        Value::Integer(n) => Ok(Value::Float((n as f64).sin())),
-                        _ => Err(Error::InvalidArguments(env.get("sin")?, args.clone()))
-                    }
-                }),
-
-                "cos" => Value::builtin("cos", |args, env| {
-                    check_args_len(env.get("cos")?, &args, 1)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(Value::Float(n.cos())),
-                        Value::Integer(n) => Ok(Value::Float((n as f64).cos())),
-                        _ => Err(Error::InvalidArguments(env.get("cos")?, args.clone()))
-                    }
-                }),
-
-                "tan" => Value::builtin("tan", |args, env| {
-                    check_args_len(env.get("tan")?, &args, 1)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(Value::Float(n.tan())),
-                        Value::Integer(n) => Ok(Value::Float((n as f64).tan())),
-                        _ => Err(Error::InvalidArguments(env.get("tan")?, args.clone()))
-                    }
-                }),
-
-                "asin" => Value::builtin("asin", |args, env| {
-                    check_args_len(env.get("asin")?, &args, 1)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(Value::Float(n.asin())),
-                        Value::Integer(n) => Ok(Value::Float((n as f64).asin())),
-                        _ => Err(Error::InvalidArguments(env.get("asin")?, args.clone()))
-                    }
-                }),
-
-                "acos" => Value::builtin("acos", |args, env| {
-                    check_args_len(env.get("acos")?, &args, 1)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(Value::Float(n.acos())),
-                        Value::Integer(n) => Ok(Value::Float((n as f64).acos())),
-                        _ => Err(Error::InvalidArguments(env.get("acos")?, args.clone()))
-                    }
-                }),
-
-                "atan" => Value::builtin("atan", |args, env| {
-                    check_args_len(env.get("atan")?, &args, 1)?;
-
-                    match args[0].eval(env)? {
-                        Value::Float(n)   => Ok(Value::Float(n.tan())),
-                        Value::Integer(n) => Ok(Value::Float((n as f64).tan())),
-                        _ => Err(Error::InvalidArguments(env.get("atan")?, args.clone()))
-                    }
-                }),
-
                 "to-path" => Value::builtin("to-path", |args, env| {
                     check_args_len(env.get("to-path")?, &args, 1)?;
                     
                     match args[0].eval(env)? {
-                        Value::String(s) => Ok(Value::Path(PathBuf::from(s))),
+                        Value::Path(x) => Ok(Value::Path(x)),
+                        Value::String(s) | Value::Symbol(s) => Ok(Value::Path(PathBuf::from(s))),
                         _ => Err(Error::InvalidArguments(env.get("to-path")?, args.clone()))
                     }
                 }),
@@ -1622,7 +1632,7 @@ impl Environment {
                     check_args_len(env.get("cls")?, &args, 0)?;
 
                     let family = get_os_family(&os_info::get().os_type());
-                    if family == "linux" || family == "unix" || family == "macos" {
+                    if family == "linux" || family == "unix" {
                         Value::Run(Box::new(Value::Path(PathBuf::from("clear"))), vec![]).eval(env)
                     } else if family == "windows" {
                         Value::Run(Box::new(Value::Path(PathBuf::from("cls"))), vec![]).eval(env)

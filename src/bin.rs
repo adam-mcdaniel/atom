@@ -1,4 +1,4 @@
-use atom::{CWD, REPORT, PROMPT, INCOMPLETE_PROMPT, format_error, Error, Environment, Value, ProgramParser, PRELUDE_FILENAME, HISTORY_FILENAME};
+use atom::{CWD, REPORT, PROMPT, INCOMPLETE_PROMPT, Error, Environment, Value, parse, PRELUDE_FILENAME, HISTORY_FILENAME};
 use rustyline::{
     error::ReadlineError,
     Editor, Helper, Modifiers, KeyEvent, Cmd
@@ -154,7 +154,7 @@ fn repl(atomic_rl: Arc<Mutex<Editor<AtomHelper>>>, atomic_env: Arc<Mutex<Environ
         rl.helper_mut().expect("No helper").update_env(&env);
         let mut text = readline(prompt, &mut rl);
 
-        if let Ok(parsed) = ProgramParser::new().parse(&text) {
+        if let Ok(parsed) = parse(&text) {
             let _ = Value::Apply(Box::new(env.get(REPORT)?), vec![match parsed.eval(&mut env) {
                 Ok(val) => val,
                 Err(e)  => Value::Error(Box::new(e))
@@ -168,7 +168,7 @@ fn repl(atomic_rl: Arc<Mutex<Editor<AtomHelper>>>, atomic_env: Arc<Mutex<Environ
                 rl.helper_mut().expect("No helper").update_env(&env);
                 let tmp = readline(&err_prompt, &mut rl);
 
-                match ProgramParser::new().parse(&text) {
+                match parse(&text) {
                     Ok(parsed) => {
                         let _ = Value::Apply(Box::new(env.get(REPORT)?), vec![match parsed.eval(&mut env) {
                             Ok(val) => val,
@@ -180,7 +180,7 @@ fn repl(atomic_rl: Arc<Mutex<Editor<AtomHelper>>>, atomic_env: Arc<Mutex<Environ
                     Err(e) => {
                         if tmp.trim() == "" {
                             let _ = Value::Apply(Box::new(env.get(REPORT)?), vec![
-                                Value::Error(Box::new(Error::SyntaxError(format!("\n{}", format_error(text.as_str(), e)))))
+                                Value::Error(Box::new(e))
                             ]).eval(&mut env);
                             break
                         } else { text += &tmp }
@@ -227,12 +227,12 @@ fn main() -> Result<(), Error> {
 
     if let Ok(home_dir) = env.get_home_dir() {
         if let Ok(contents) = read_to_string(home_dir.join(PRELUDE_FILENAME)) {
-            match ProgramParser::new().parse(&contents) {
+            match parse(contents) {
                 Ok(parsed) => match parsed.eval(&mut env) {
                     Ok(_) => {}
                     Err(e) => eprintln!("error in {}: {}", PRELUDE_FILENAME, e)
                 }
-                Err(e) => eprintln!("invalid syntax in {}\n{}", PRELUDE_FILENAME, format_error(&contents, e))
+                Err(e) => eprintln!("invalid syntax in {}\n{}", PRELUDE_FILENAME, e)
             }
         } else {
             eprintln!("could not read {}", PRELUDE_FILENAME)

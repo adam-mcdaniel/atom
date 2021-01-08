@@ -1,6 +1,7 @@
 pub const VERSION: &[usize] = &[0, 1, 0];
 pub const PRELUDE_FILENAME: &str = ".atom-prelude";
 pub const HISTORY_FILENAME: &str = ".atom-history";
+use std::cmp::min;
 
 pub use asciicolor::Colorize;
 
@@ -13,10 +14,24 @@ pub use value::{Value, Size};
 mod error;
 pub use error::Error;
 
+use comment::atom::strip;
+
 use lalrpop_util::{lalrpop_mod, ParseError};
 lalrpop_mod!(parser);
-pub use parser::ProgramParser;
+use parser::ProgramParser;
 
+pub fn parse(code: impl ToString) -> Result<Value, Error> {
+    let code = code.to_string();
+    let code = match strip(&code) {
+        Ok(s) => s,
+        Err(_) => code.clone(),
+    };
+
+    match ProgramParser::new().parse(&code) {
+        Ok(val) => Ok(val),
+        Err(e) => Err(Error::SyntaxError(format!("\n{}", format_error(&code, e))))
+    }
+}
 
 pub type SyntaxError<'a, T> = ParseError<usize, T, &'a str>;
 
@@ -48,7 +63,7 @@ pub fn make_error(line: &str, unexpected: &str, line_number: usize, column_numbe
 // Gets the line number, the line, and the column number of the error
 pub fn get_line(script: &str, location: usize) -> (usize, String, usize) {
     // Get the line number from the character location
-    let line_number = script[..location].lines().count();
+    let line_number = script[..min(location + 1, script.len())].lines().count();
     // Get the line from the line number
     let line = match script.lines().nth(line_number - 1) {
         Some(line) => line,
