@@ -365,7 +365,7 @@ They can all be overwritten, if you wish. I would be careful about using macros 
 
 ## Installation
 
-To install download Rust [here](https://www.rust-lang.org/).
+To install, you must download Rust from [here](https://www.rust-lang.org/).
 
 #### Development Build
 
