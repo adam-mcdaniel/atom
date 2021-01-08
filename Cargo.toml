@@ -3,6 +3,12 @@ name = "atom"
 version = "0.1.0"
 authors = ["Adam McDaniel <adam.mcdaniel17@gmail.com>"]
 edition = "2018"
+license = "APACHE"
+description = "Shell scripting that will knock your socks off"
+readme = "README.md"
+documentation = "https://github.com/adam-mcdaniel/atom"
+homepage = "https://github.com/adam-mcdaniel/atom"
+repository = "https://github.com/adam-mcdaniel/atom"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [[bin]]

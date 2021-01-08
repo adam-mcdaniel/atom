@@ -11,7 +11,7 @@ Shell scripting that will knock your socks off.
 
 ## Why write a shell?
 
-[Bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) is everywhere in the programming world. Literally _everywhere_. If you download and install this project, you will likely use bash to do so **(or some bash derivative / compatible shell)**.
+[Bash](https://en.wikipedia.org/wiki/Bash_(Unix_shell)) is everywhere in the programming world. Literally _everywhere_. If you download and install this project, you will likely use bash to do so _(or some bash derivative / compatible shell)_.
 
 Typically, I _**love**_ it when a small, simple platform like bash is extremely widespread. It usually makes everyone's lives easier to use.
 
@@ -19,7 +19,7 @@ Typically, I _**love**_ it when a small, simple platform like bash is extremely 
 
 ### Bash scripting needs to be outlawed
 
-Seriously, _how do people actually write bash scripts_??? It's absolutely [unusable](https://mywiki.wooledge.org/BashPitfalls) for the vast majority of people who aren't absolute-200-IQ-geniuses. Everytime I want to do a _simple `for` loop_ over each files in a directory, I have to look it up, and then **still** give up because it's too difficult.
+Seriously, _how do people actually write bash scripts_??? It's absolutely [unusable](https://mywiki.wooledge.org/BashPitfalls) for the vast majority of us who aren't absolute-200-IQ-geniuses. Everytime I want to do a _simple `for` loop_ over each files in a directory, I have to look it up, and then **still** give up because it's too difficult.
 
 How can users be expected to write code like this?
 
@@ -44,11 +44,11 @@ The answer: _they can't._
 
 The worst parts about bash's scripting capabilities are as follows:
 1. Bash code is designed to be hacked together quickly in an unreadable way, which is not a good design goal for _scripting_ features. While commands meant for typical file navigation and running programs should be quick and simple, _scripting features should be more readable and consistent._
-2. Bash _**still** fails to be hacked together quickly in an unreadable way_.
+2. Bash fails to even fulfill its **_one_** design goal, because scripts are _so_ unreadable that it's **impossible** to hack anything together at all.
 
 ### How does atom address these problems?
 
-As I see it, there are two sides of a shell. The interactive side, and the scripting side. Creating a _**good**_ shell means balancing these two modes well. If you make a language too well suited to _scripting_, file navigation, etc. will suffer. On the other hand, if you make a language too well suited for _interactive_ commands **(like bash)**, then scripting becomes impossible.
+As I see it, there are two sides of a shell. The interactive side, and the scripting side. Creating a _**good**_ shell means balancing these two modes well. If you make a language too well suited to _scripting_, then file navigation, and other interactive features will suffer. On the other hand, if you make a language too well suited for _interactive_ commands **(like bash)**, then scripting becomes impossible.
 
 Atom tries to strike a better balance between the two modes, and, in my opinion, does so rather successfully. It does seem to be more well suited to scripting instead of interactive programming, but I don't really mind the sacrifice all that much.
 
@@ -67,13 +67,19 @@ To show Atom's scripting capabilities, I wrote an entire card game using it!
   <a href="https://asciinema.org/a/383254"><img src="./assets/rummy-game.png" width="48%"/></a>
 </p>
 
-The CPU is actually much better than I am, and has beaten me with twice or thrice my score multiple times.
+The CPU is actually much better than I am, and has beaten me with twice or thrice my score multiple times. It doesn't cheat at all, it only ranks its cards by synergy, encourages picking up cards that synergize well with its best cards, and discarding its worst cards.
 
 If you want to try all of my custom macros, and to have my splash screen, use my `.atom-prelude` file in your home directory and experiment away! To play my card game specifically, run `rummy@play'`.
 
+## About the Author
+
+I'm a freshman in college bored in quarantine. If you enjoy my projects, consider supporting me by buying me a coffee! 
+
+<a href="https://www.buymeacoffee.com/adammcdaniel" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-violet.png" height=41px width=174px style="!important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+
 ## Usage
 
-Atom is drastically different than any other shell, both syntactically, and internally.
+Atom is drastically different than any other shell, both with its outward syntax and internal functionality.
 
 For example, atom supports traditional tables, lists, strings, ints, floats, bools, etc. like [this drastically better and more professional shell that I should have just started using to begin with (but there's no fun in that. "Not invented here syndrome" really does have a hold on me doesn't it?)](https://www.nushell.sh/).
 
@@ -103,7 +109,7 @@ The reason I chose the `'` character is because it is the most readily available
 
 Not that much of a sacrifice for scripting power bestowed by the gods.
 
-##### Aliases
+#### Aliases
 
 You might find that you have defined a symbol `g++` with a non-callable value (not a macro or a function), like `5`.
 
@@ -119,6 +125,8 @@ ls'
 ```
 
 ### Scripting Syntax
+
+Again, scripting syntax is really just syntax encouraged for scripting. All syntax you see on this README will work anywhere.
 
 To start off simple, let's define a variable.
 
@@ -155,7 +163,8 @@ Now let's try to do some fun stuff with lambdas.
 min := \x,y -> x < y? x : y;
 max := fn(x, y) -> x < y? x : y;
 
-return-five :=   () -> 5;
+# You can put brackets around the lambda body for multiple statements
+return-five :=   () -> { print("returning 5"); 5 };
 return-six  := fn() -> 6;
 
 increment := x -> x + 1;
@@ -184,6 +193,7 @@ fn days-in-month(month, year) {
 fn day-of-week(m, d, y) {
 	t := [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
 
+    # Notice that semicolons go on the end of if statements too
 	if m < 3 { y := y - 1 };
     
     # The last expression in a function is the value that is returned
@@ -352,3 +362,21 @@ They can all be overwritten, if you wish. I would be careful about using macros 
 | `triple` | Triple a number. | ^ | `fn(x) -> x * 3` |
 | `quadruple` | Quadruple a number. | ^ | `fn(x) -> x * 4` |
 | `quintuple` | Quintuple a number. | ^ | `fn(x) -> x * 5` |
+
+## Installation
+
+#### Development Build
+
+```bash
+git clone https://github.com/adam-mcdaniel/atom
+cd atom
+cargo install -f --path .
+```
+
+#### Releases
+To get the current release build, install from [crates.io](https://crates.io/crates/atom).
+
+```bash
+# Also works for updating oakc
+cargo install -f atom
+```
