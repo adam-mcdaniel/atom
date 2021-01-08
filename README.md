@@ -121,10 +121,7 @@ This also means that you can make aliases rather simply by defining a symbol wit
 This snippet defines `ls` as an alias for the [`lsd`](https://github.com/Peltoche/lsd) program:
 ```python
 ls := "lsd";
-ls';
-
-cat := "bat";
-cat' main.cpp
+ls'
 ```
 
 ### Scripting Syntax
