@@ -11,7 +11,7 @@ Shell scripting that will knock your socks off.
 
 ## About the Author
 
-I'm a freshman in college bored in quarantine. If you enjoy my projects, consider supporting me by buying me a coffee! 
+I'm a freshman in college bored in quarantine, and looking for any work. If you enjoy my projects, consider supporting me by buying me a coffee! 
 
 <a href="https://www.buymeacoffee.com/adammcdaniel" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-violet.png" height=41px width=174px style="!important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
