@@ -58,6 +58,19 @@ Atom's design goals are:
 3. **Incorrect code should be rejected**. There should be no attempt to understand the user's incorrect code **(see [JavaScript](https://javascript.com))**. _Bad code is bad code_.
 4. Declarative and functional programming first, **imperative last**.
 
+I would say these goals serve atom very well.
+
+To show Atom's scripting capabilities, I wrote an entire card game using it!
+
+<p float="left">
+  <a href="https://asciinema.org/a/383254"><img src="./assets/rummy-splash.png" width="48%"/></a>
+  <a href="https://asciinema.org/a/383254"><img src="./assets/rummy-game.png" width="48%"/></a>
+</p>
+
+The CPU is actually much better than I am, and has beaten me with twice or thrice my score multiple times.
+
+If you want to try all of my custom macros, and to have my splash screen, use my `.atom-prelude` file in your home directory and experiment away!
+
 ## Usage
 
 Atom is drastically different than any other shell, both syntactically, and internally.

@@ -1,0 +1,1008 @@
+#  ______      __                          
+# /\  _  \    /\ \                         
+# \ \ \L\ \   \_\ \     __      ___ ___    
+#  \ \  __ \  /'_` \  /'__`\  /' __` __`\  
+#   \ \ \/\ \/\ \L\ \/\ \L\.\_/\ \/\ \/\ \ 
+#    \ \_\ \_\ \___,_\ \__/.\_\ \_\ \_\ \_\
+#     \/_/\/_/\/__,_ /\/__/\/_/\/_/\/_/\/_/                                
+#                  ____                                 ___             
+#  /'\_/`\        /\  _`\                    __        /\_ \            
+# /\      \    ___\ \ \/\ \     __      ___ /\_\     __\//\ \     ____  
+# \ \ \__\ \  /'___\ \ \ \ \  /'__`\  /' _ `\/\ \  /'__`\\ \ \   /',__\ 
+#  \ \ \_/\ \/\ \__/\ \ \_\ \/\ \L\.\_/\ \/\ \ \ \/\  __/ \_\ \_/\__, `\
+#   \ \_\\ \_\ \____\\ \____/\ \__/.\_\ \_\ \_\ \_\ \____\/\____\/\____/
+#    \/_/ \/_/\/____/ \/___/  \/__/\/_/\/_/\/_/\/_/\/____/\/____/\/___/ 
+#  ____               ___                __            
+# /\  _`\            /\_ \              /\ \           
+# \ \ \L\ \_ __    __\//\ \    __  __   \_\ \     __   
+#  \ \ ,__/\`'__\/'__`\\ \ \  /\ \/\ \  /'_` \  /'__`\ 
+#   \ \ \/\ \ \//\  __/ \_\ \_\ \ \_\ \/\ \L\ \/\  __/ 
+#    \ \_\ \ \_\\ \____\/\____\\ \____/\ \___,_\ \____\
+#     \/_/  \/_/ \/____/\/____/ \/___/  \/__,_ /\/____/
+#
+#
+#
+# Have fun, scripters!
+
+
+# constants
+ROOT := to-path("/");
+macro root() { CWD := ROOT; nil };
+
+BINS := to-path("/usr/bin");
+macro bins() { CWD := BINS; nil };
+
+PRELUDE := sh@prelude;
+
+WEEKDAYS := [
+	"Sunday",
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday"
+];
+
+MONTHS := [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December"
+];
+
+CATS := ["
+     _
+   |\\'/-..--.
+  / _ _   ,  ;
+ `~=`Y'~_<._./
+  <`-....__.'",
+"
+
+ |\\__/,|   (`\\
+ |_ _  |.--.) )
+ ( T   )     /
+(((^_(((/(((_/",
+"
+
+    \\    /\\
+     )  ( ')
+    (  /  )
+     \\(__)|",
+"
+
+      ^~^  ,
+     ('Y') )
+     /   \\/ 
+    (\\|||/)",
+"   .       .
+   \\`-\"'\"-'/
+    } 6 6 {
+   =.  Y  ,=
+     /^^^\\  .
+    /     \\  )
+   (  )-(  )/
+    \"\"   \"\"",
+"
+
+         /\\_/\\
+    ____/ o o \\
+  /~____  =Y= /
+ (______)__m_m)",
+];
+
+fn cats() {
+	print(widget@create("Cat", rand@choose(CATS), 18, 10));
+	nil
+};
+
+
+"macros";
+ls := "lsd";
+l  := ls;
+macro cds(x) {
+	cd-eval(x);
+	ls'
+};
+
+git := {
+	"clone":    macro(url) -> { "git"' "clone" url },
+	"add":      macro() -> { "git"' "add" . },
+	"checkout": macro(branch-name) -> { "git"' checkout -B branch-name },
+	"commit":   macro(msg) -> { "git"' commit -m msg },
+	"push":     macro(repo, branch) -> { "git"' "push" repo branch },
+};
+
+"nice user functions";
+min := \x,y -> x<y? x : y;
+max := \x,y -> x<y? y : x;
+
+add := \x,y -> x + y;
+mul := \x,y -> x * y;
+sub := \x,y -> x - y;
+div := \x,y -> x / y;
+rem := \x,y -> x % y;
+
+fn is-odd(n)  { (n % 2) != 0 };
+fn is-even(n) { (n % 2)  = 0 };
+
+square := x -> x * x;
+cube   := x -> x * x * x;
+
+fn is-prime(n) {
+	if n < 2 {
+		false
+	} else {
+		result := true;
+		x := 2;
+		while x < (n / 2 + 1) and result {
+			if n % x = 0 { result := false };
+			x := x + 1;
+		};
+		result
+	}
+};
+
+primes := x -> filter(is-prime, 2 to (x + 1));
+
+fn enumerate(x) {
+	zip(0 to (len(x)), x)
+};
+
+"nice info";
+
+fn is-leapyear(year) {
+	if year % 4 = 0 and year % 100 != 0 {
+		true
+	} else if year % 100 = 0 and year % 400 = 0 {
+		true
+	} else {
+		false
+	}
+};
+
+
+fn days-in-month(month, year) {
+	month = 2? 28 + to-int(is-leapyear(year)) : 31 - (((month - 1) % 7) % 2)
+};
+
+fn day-of-week(m, d, y) {
+	t := [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
+	if m < 3 { y := y - 1 };
+	
+	(((y + to-int(y / 4.0)) - to-int(y / 100.0)) + to-int(y / 400.0) + t[m - 1] + d) % 7
+};
+
+fn make-calendar() {
+	result := MONTHS[date@month - 1] + " " + to-str(date@day) + ", " + to-str(date@year) + "\n";
+	result := " " * to-int((28 - len(result)) / 2 + 1) + result;
+	result := result + " Su  Mo  Tu  We  Th  Fr  Sa\n";
+
+	dof := day-of-week(date@month, 1, date@year);
+	dim := days-in-month(date@month, date@year);
+
+	for _ in 0 to dof {
+		result := result + "    ";
+	};
+
+	for i in 1 to (dim + 1) {
+		num := to-str(i);
+		if len(num) < 2 { num := (date@day = i? " *" : "  ") + num; }
+		else { num := (i = date@day? "*" : " ") + num };
+		result := result + num + (((i + dof) % 7 = 0)? "\n" : " ");
+	};
+	result
+};
+
+fn cal() {
+	print(widget@create("Calendar", make-calendar(), 32, 10));
+	nil
+};
+
+TODO := [];
+TODO_FILE := HOME + ".atom-todo";
+todo := {};
+macro make-todo() {
+	{
+			result := "";
+			for i_x in enumerate(TODO) {
+					i := i_x[0] + 1;
+					todo := i_x[1];
+					result := result + to-str(i) + ". " + todo + (i < len(TODO)? "\n" : "");
+			};
+			result
+	}
+};
+
+todo := insert(todo, "save", macro() -> {
+	file@write(TODO_FILE, join(TODO, "\n"));
+	nil;
+});
+
+todo := insert(todo, "load", macro() -> {
+	if not exists(TODO_FILE) {
+		print("Could not find TODO list file");
+		file@write(TODO_FILE, "");
+	};
+
+	TODO := split(file@read(TODO_FILE), "\n");
+	
+	if TODO = [""] {
+		TODO := [];
+	};
+
+	nil;
+});
+
+todo := insert(todo, "clear", macro() -> {
+	TODO := [];
+	todo@save();
+	print(fmt@yellow("Cleared TODO list!"));
+	nil;
+});
+
+todo := insert(todo, "add", macro(task) -> {
+    TODO := push(TODO, to-str(task));
+	todo@save();
+	print("Added task " + fmt@blue("\"" + to-str(task) + "\""));
+	nil;
+});
+
+todo := insert(todo, "rm", macro(i) -> {
+	TODO := {
+		index := to-int(i);
+
+		if index > len(TODO) {
+			print("Index out of range");
+		} else {
+			result := [];
+			for i_x in enumerate(TODO) {
+				if (i_x[0] + 1) != index {
+					result := push(result, i_x[1]);
+				} else {
+					print("Finished task " + fmt@blue("\"" + to-str(i_x[1]) + "\""));
+				};
+			};
+
+			result
+		}
+	};
+	todo@save();
+	nil
+});
+
+todo := insert(todo, "widget", macro() -> {
+	widget@create("TODO List", make-todo(), 50, max(len(TODO) + 2, 3))
+});
+
+todo := insert(todo, "print", macro() -> {
+	print(todo@widget());
+	nil
+});
+
+
+fn contains(list, item) {
+	len(filter(x -> x = item, list)) > 0
+};
+
+fn count(list, item) {
+	len(filter(x -> x = item, list))
+};
+
+
+RUMMY-STATE := nil;
+
+rummy := {
+	"reset": macro() -> {
+		RUMMY-STATE := {
+			deck := rand@shuffle(cards@deck@all);
+			{
+				"deck": tail(deck),
+
+				"stock": [head(deck)],
+
+				"player-hand":  [],
+				"player-books": [],
+
+				"ai-hand":  [],
+				"ai-books": [],
+				"log": []
+			};
+		};
+
+		for _ in 0 to 10 {
+			rummy@ai-draw();
+			rummy@player-draw();
+		};
+
+		RUMMY-STATE := insert(
+			RUMMY-STATE,
+			"log",
+			[]
+		);
+
+		nil
+	},
+
+	"splash": () -> {
+		clear();
+		for x in 0 to 4 {
+			print(widget@create("♠♥♦♣", "                   Welcome to" + "." * x, 50, 3));
+			sleep(0.8);
+			clear();
+		};
+input(widget@create("", "
+ 888888ba
+ 88    `8b
+a88aaaa8P' dP    dP 88d8b.d8b 88d8b.d8b dP    dP
+ 88   `8b. 88    88 88'`88'`8 88'`88'`8 88    88
+ 88     88 88.  .88 88  88  8 88  88  8 88.  .88
+ dP     dP `88888P' dP  dP  d dP  dP  d `8888P88
+                                             .88
+                                         d8888P
+              Press enter to start!", 50, 12) + "\n");
+		nil;
+	},
+
+	"print": macro() -> {
+		{
+			log-tail := RUMMY-STATE@log;
+			while len(log-tail) > 11 {
+				log-tail := tail(log-tail);
+			};
+			clear();
+			print(
+				widget@add-vertical(
+					widget@create("", "
+ 888888ba
+ 88    `8b
+a88aaaa8P' dP    dP 88d8b.d8b 88d8b.d8b dP    dP
+ 88   `8b. 88    88 88'`88'`8 88'`88'`8 88    88
+ 88     88 88.  .88 88  88  8 88  88  8 88.  .88
+ dP     dP `88888P' dP  dP  d dP  dP  d `8888P88
+                                             .88
+                                         d8888P", 50, 10),
+					widget@add-horizontal(
+						widget@create("Rummy",
+							"        CPU (" + to-str(rummy@ai-score()) + ")\n" +
+							join(map(book -> "[" + join(book, " ") + " ]", RUMMY-STATE@ai-books), ", ") + "\n" +
+							join(map(_ -> cards@back, RUMMY-STATE@ai-hand), " ") + "\n\n" +
+							"   " + cards@back + " " + join(RUMMY-STATE@stock, " ") + "\n\n" +
+							join(RUMMY-STATE@player-hand, " ") + "\n" +
+							join(map(book -> "[" + join(book, " ") + " ]", RUMMY-STATE@player-books), ", ") + "\n" +
+							"        You (" + to-str(rummy@player-score()) + ")",
+							30,
+							15
+						),
+						widget@create("Log", join(log-tail, "\n"), 20, 15),
+					)
+				)
+			);
+			nil
+		}
+	},
+
+	"is-run": book -> {
+		{
+			result := true;
+			suite  := cards@suite(book[0]);
+			for card in book {
+				result := suite = cards@suite(card) and result;
+			};
+
+			is-recoverable := result;
+
+			vals := sort(map(cards@value, book));
+			last_val := vals[0] - 1;
+			for val in vals {
+				result := last_val + 1 = val and result;
+				last_val := val;
+			};
+			
+			if (not result) and is-recoverable and vals[0] = 1 {
+				result := true;
+				vals := push(tail(vals), 14);
+				last_val := vals[0] - 1;
+				for val in vals {
+					result := last_val + 1 = val and result;
+					last_val := val;
+					result
+				};
+			};
+
+
+			result
+		}
+	},
+
+	"is-set": book -> {
+		{
+			result := true;
+			val := cards@value(book[0]);
+			for card in book {
+				result := cards@value(card) = val and result;
+			};
+			result
+		}
+	},
+
+	"is-rummy": macro(rummy-cards) -> {
+		{
+			result := false;
+			for book in RUMMY-STATE@ai-books {
+				if (rummy@is-set(book + rummy-cards) or rummy@is-run(book + rummy-cards)) and len(book) >= 3 {
+					result := true;
+				};
+			};
+
+			for book in RUMMY-STATE@player-books {
+				if (rummy@is-set(book + rummy-cards) or rummy@is-run(book + rummy-cards)) and len(book) >= 3 {
+					result := true;
+				};
+			};
+
+			result
+		}
+	},
+
+	"is-valid-book": macro(book) -> {
+		{
+			if len(book) = 0 {
+				false
+			} else if rummy@is-set(book) and len(book) >= 3 {
+				true
+			} else if rummy@is-run(book) and len(book) >= 3 {
+				true
+			} else if rummy@is-rummy(book) and len(book) >= 1 {
+				true
+			} else {
+				false
+			}
+		}
+	},
+
+	"card-score": card -> {
+		if contains(cards@deck@aces, card) {
+			15
+		} else if contains(cards@deck@faces, card) or cards@value(card) = 10 {
+			10
+		} else if contains(cards@deck@numbers, card) {
+			5
+		} else {
+			0
+		};
+	},
+
+	"score": book -> {
+		score := 0;
+
+		if rummy@is-valid-book(book) {
+			for c in book {
+				score := score + rummy@card-score(c);
+			};
+		};
+
+		score
+	},
+
+	"add-log": macro(info) -> {
+		RUMMY-STATE := insert(RUMMY-STATE, "log", push(RUMMY-STATE@log, info));
+		nil
+	},
+
+	"log": macro() -> {
+		for msg in RUMMY-STATE@log {
+			print(msg);
+		};
+	},
+
+	"player-add-book": macro(book) -> {
+		if rummy@is-valid-book(book) {
+			RUMMY-STATE := insert(
+				insert(
+					RUMMY-STATE,
+					"player-hand",
+					filter(x -> not contains(book, x), RUMMY-STATE@player-hand)
+				),
+				"player-books",
+				push(RUMMY-STATE@player-books, book)
+			);
+			rummy@add-log("You booked " + join(book, " "));
+			true;
+		} else {
+			false
+		}
+	},
+
+	"ai-add-book": macro(book) -> {
+		if rummy@is-valid-book(book) {
+			RUMMY-STATE := insert(
+				insert(
+					RUMMY-STATE,
+					"ai-hand",
+					filter(x -> not contains(book, x), RUMMY-STATE@ai-hand)
+				),
+				"ai-books",
+				push(RUMMY-STATE@ai-books, book)
+			);
+			rummy@add-log("CPU booked " + join(book, " "));
+			true
+		} else {
+			false
+		}
+	},
+
+	"player-draw": macro() -> {
+		RUMMY-STATE := {
+			card := head(RUMMY-STATE@deck);
+			rummy@add-log("You drew " + card);
+
+			insert(
+				insert(RUMMY-STATE, "player-hand", push(RUMMY-STATE@player-hand, card)),
+				"deck",
+				tail(RUMMY-STATE@deck),
+			);
+		};
+		
+		nil
+	},
+
+	"ai-draw": macro() -> {
+		RUMMY-STATE := {
+			card := head(RUMMY-STATE@deck);
+			rummy@add-log("CPU drew card " + cards@back);
+
+			insert(
+				insert(RUMMY-STATE, "ai-hand", push(RUMMY-STATE@ai-hand, card)),
+				"deck",
+				tail(RUMMY-STATE@deck),
+			);
+		};
+		
+		nil
+	},
+
+	"player-discard": macro(card-name) -> {
+		RUMMY-STATE := {
+			filtered := filter(x -> x != cards@from-name(card-name), RUMMY-STATE@player-hand);
+
+			if len(filtered) = len(RUMMY-STATE@player-hand) - 1 {
+				rummy@add-log("You dumped " + cards@from-name(card-name));
+				
+				insert(
+					insert(RUMMY-STATE, "player-hand", filtered),
+					"stock",
+					push(RUMMY-STATE@stock, cards@from-name(card-name)),
+				)
+			} else {
+				RUMMY-STATE
+			}
+		};
+		nil
+	},
+
+	"ai-discard": macro(card-name) -> {
+		RUMMY-STATE := {
+			filtered := filter(x -> x != cards@from-name(card-name), RUMMY-STATE@ai-hand);
+
+			if len(filtered) = len(RUMMY-STATE@ai-hand) - 1 {
+				rummy@add-log("CPU dumped " + cards@from-name(card-name));
+
+				insert(
+					insert(RUMMY-STATE, "ai-hand", filtered),
+					"stock",
+					push(RUMMY-STATE@stock, cards@from-name(card-name)),
+				)
+			} else {
+				RUMMY-STATE
+			}
+		};
+		nil
+	},
+
+	"player-pickup-stock": macro(card-name) -> {
+		RUMMY-STATE := {
+			new-stock := [];
+			taken := [];
+
+			take-rest := false;
+			for c in RUMMY-STATE@stock {
+				if cards@from-name(card-name) = c {
+					take-rest := true;
+				};
+
+				if take-rest {
+					taken := push(taken, c);
+				} else {
+					new-stock := push(new-stock, c);
+				};
+			};
+
+			if take-rest {
+				rummy@add-log("You drew " + join(taken, " "));
+
+				insert(
+					insert(RUMMY-STATE, "player-hand", RUMMY-STATE@player-hand + taken),
+					"stock",
+					new-stock,
+				)
+			} else {
+				RUMMY-STATE
+			}
+		};
+		nil
+	},
+
+	"ai-pickup-stock": macro(card-name) -> {
+		RUMMY-STATE := {
+			new-stock := [];
+			taken := [];
+
+			take-rest := false;
+			for c in RUMMY-STATE@stock {
+				if cards@from-name(card-name) = c {
+					take-rest := true;
+				};
+
+				if take-rest {
+					taken := push(taken, c);
+				} else {
+					new-stock := push(new-stock, c);
+				};
+			};
+
+			if take-rest {
+				rummy@add-log("CPU drew " + join(taken, " "));
+				insert(
+					insert(RUMMY-STATE, "ai-hand", RUMMY-STATE@ai-hand + taken),
+					"stock",
+					new-stock,
+				)
+			} else {
+				RUMMY-STATE
+			}
+		};
+		nil
+	},
+
+	"ai-potential-books": macro(possible) -> {
+		{
+			result := [];
+
+			for c in RUMMY-STATE@ai-hand + possible {
+				for potential-book in result {
+					if rummy@is-run(potential-book + [c]) or
+					   rummy@is-set(potential-book + [c]) {
+						result := result + [potential-book + [c]];
+					};
+				};
+
+				result := result + [[c]];
+			};
+
+			result := filter(x -> len(x) >= 2 or rummy@is-valid-book(x), result);
+			result
+		}
+	},
+
+	"ai-worst-card": macro() -> {
+		{
+			potential-books := rummy@ai-potential-books(RUMMY-STATE@stock);
+			
+			potential-uses := card -> reduce(\x,y -> x + y, 0, map(book -> count(book, card), potential-books));
+
+			reduce(
+				\x,y -> (rummy@card-score(x) * potential-uses(x)) > (rummy@card-score(y) * potential-uses(y))? y : x,
+				RUMMY-STATE@ai-hand[0],
+				RUMMY-STATE@ai-hand
+			)
+		}
+	},
+
+	"player-score": macro() -> {
+		sum(map(rummy@score, RUMMY-STATE@player-books))
+	},
+
+	"ai-score": macro() -> {
+		sum(map(rummy@score, RUMMY-STATE@ai-books))
+	},
+
+	"ai-play": macro() -> {
+		RUMMY-STATE := {
+			potential-books := rummy@ai-potential-books([]);
+			
+			best := len(potential-books) = 0? [] : reduce(\x,y -> rummy@score(x) > rummy@score(y)? x : y, potential-books[0], potential-books);
+			
+			while rummy@score(best) > 0 {
+				rummy@ai-add-book(best);
+				potential-books := rummy@ai-potential-books([]);
+				best := len(potential-books) = 0? [] : reduce(\x,y -> rummy@score(x) > rummy@score(y)? x : y, potential-books[0], potential-books);
+			};
+
+		
+			worst-card := cards@name(rummy@ai-worst-card());
+
+			if len(RUMMY-STATE@player-hand) <= len(RUMMY-STATE@ai-hand) / 2 or len(RUMMY-STATE@ai-hand) <= 3 {
+				rummy@ai-draw();
+				worst-card := cards@name(rummy@ai-worst-card());
+			} else {
+				potential-books := rummy@ai-potential-books(RUMMY-STATE@stock);
+				best := len(potential-books) = 0? [] : reduce(\x,y -> rummy@score(x) > rummy@score(y)? x : y, potential-books[0], potential-books);
+				best-stock := filter(x -> not contains(RUMMY-STATE@ai-hand, x), best);
+
+				if len(best-stock) = 0 {
+					rummy@ai-draw();
+					worst-card := cards@name(rummy@ai-worst-card());
+				} else if len(best-stock) = 1 and rand@int(0, 2) = 0 {
+					rummy@ai-pickup-stock(cards@name(best-stock[0]));
+				} else if len(best-stock) > 1 {
+					picked-up := false;
+					i := 0;
+
+					for c in rev(RUMMY-STATE@stock) {
+						if contains(best-stock, c) {
+							i := i + 1;
+						};
+
+						if i = len(best-stock) {
+							rummy@ai-pickup-stock(cards@name(c));
+							worst-card := cards@name(rummy@ai-worst-card());
+							picked-up := true;
+							i := i + 1;
+						};
+					};
+
+					if not picked-up {
+						rummy@ai-draw();
+					};
+				} else {
+					rummy@ai-draw();
+				};
+			};
+
+			potential-books := rummy@ai-potential-books([]);
+			best := len(potential-books) = 0? [] : reduce(\x,y -> rummy@score(x) > rummy@score(y)? x : y, potential-books[0], potential-books);
+			
+			while rummy@score(best) > 0 {
+				rummy@ai-add-book(best);
+				potential-books := rummy@ai-potential-books([]);
+				best := len(potential-books) = 0? [] : reduce(\x,y -> rummy@score(x) > rummy@score(y)? x : y, potential-books[0], potential-books);
+			};
+
+			if len(RUMMY-STATE@ai-hand) > 0 {
+				if not contains(RUMMY-STATE@stock, worst-card) {
+					worst-card := cards@name(rummy@ai-worst-card());
+				};
+				rummy@ai-discard(worst-card);
+			};
+
+			RUMMY-STATE
+		};
+
+		nil;
+	},
+
+	"play": fn() -> {
+		rummy@reset();
+		rummy@splash();
+
+		is-done := false;
+		while not (len(RUMMY-STATE@player-hand) = 0 or len(RUMMY-STATE@ai-hand) = 0 or is-done) {
+			rummy@print();
+			print("1. Draw a card");
+			print("2. Pick up from stock");
+			print("3. Quit");
+			choice := 0;
+
+			while is-err(choice := to-int(input("> "))) or not (1 <= choice and choice <= 3) {
+				print("Invalid choice");
+			};
+
+			if choice = 1 {
+				rummy@player-draw();
+				rummy@print();
+			} else if choice = 2 {
+				while is-err(choice := cards@from-name(input("Card to pick up> "))) or not contains(RUMMY-STATE@stock, choice) {
+					print("Invalid choice");
+				};
+				rummy@player-pickup-stock(cards@name(choice));
+				rummy@print();
+			};
+
+			if choice != 3 {
+				choice := 0;
+
+				while choice < 2 and len(RUMMY-STATE@player-hand) > 0 {
+					print("1. Make a book");
+					print("2. Discard");
+					print("3. Quit");
+					while is-err(choice := to-int(input("> "))) or not (1 <= choice and choice <= 3) {
+						print("Invalid choice");
+					};
+					if choice = 1 {
+						book := [];
+
+						while is-err(choice := cards@from-name(input("Card to add to book> "))) or not contains(RUMMY-STATE@player-hand, choice) {
+							print("Invalid choice");
+						};
+
+						book := push(book, choice);
+
+						while input("Continue? ") = "y" {
+							while is-err(choice := cards@from-name(input("Card to add to book> "))) or not contains(RUMMY-STATE@player-hand, choice) {
+								print("Invalid choice");
+							};
+							book := push(book, choice);
+						};
+
+						rummy@player-add-book(book);
+						rummy@print();
+
+						choice := 1;
+					} else if choice = 2 {
+						while is-err(choice := cards@from-name(input("Card to discard> "))) or not contains(RUMMY-STATE@player-hand, choice) {
+							print("Invalid choice");
+						};
+						rummy@player-discard(cards@name(choice));
+						choice := 2;
+					} else if choice = 3 {
+						is-done := true;
+						choice := 3;
+					} else if not confirm {
+						choice := 0;
+					};
+				};
+			} else {
+				is-done := true;
+			};
+
+			if not (len(RUMMY-STATE@player-hand) = 0 or len(RUMMY-STATE@ai-hand) = 0 or is-done) {
+				rummy@ai-play();
+			};
+		};
+
+		ai-score := rummy@ai-score() - sum(map(rummy@card-score, RUMMY-STATE@ai-hand));
+		player-score := rummy@player-score() - sum(map(rummy@card-score, RUMMY-STATE@player-hand));
+
+		if not is-done {
+			if ai-score > player-score {
+				print(fmt@underline(fmt@red("CPU wins with", ai-score, "against your", player-score, "points")));
+			} else if ai-score < player-score {
+				print(fmt@blue("You win with", player-score, "against the CPU's", ai-score, "points"));
+			} else {
+				print(fmt@yellow("Tied with"), ai-score, "points")
+			};
+		} else {
+			print("Quitting game");
+		};
+
+		nil;
+	},
+};
+
+rummy@reset();
+
+
+macro quit() {
+	todo@save();
+	print("Goodbye!👋");
+	sleep(0.4);
+	exit();
+};
+
+macro welcome() {
+	todo@load();
+	clear();
+
+time-emoji := time@hour<=6? "🌃" : time@hour <= 10? "🌅" : time@hour <= 18? "🌤️ " : "🌃";
+date-emoji :=   date@month = 1? "⛄" :
+                date@month = 2? "💖" :
+                date@month = 3? "🍀" :
+                date@month = 4? "🌂" :
+                date@month = 5? "🌻" :
+                date@month = 6? "🌞" :
+                date@month = 7? "🌊" :
+                date@month = 8? "📝" :
+                date@month = 9? "🍎" :
+                date@month = 10? "🎃" :
+                date@month = 11? "🍂" :
+                date@month = 12? "🌨️ ️" : "📅";
+zodiac-emoji := date@month = 1? date@day<20? "🐐" : "🏺":
+                date@month = 2? date@day<19? "🏺" : "🐟":
+                date@month = 3? date@day<21? "🐟" : "🐏":
+                date@month = 4? date@day<20? "🐏" : "🐂":
+                date@month = 5? date@day<21? "🐂" : "👬":
+                date@month = 6? date@day<21? "👬" : "🦀":
+                date@month = 7? date@day<23? "🦀" : "🦁":
+                date@month = 8? date@day<23? "🦁" : "👩":
+                date@month = 9? date@day<23? "👩" : "⚖️":
+                date@month = 10? date@day<23? "⚖️️" : "🦂":
+                date@month = 11? date@day<22? "🦂" : "🏹":
+                date@month = 12? date@day<22? "🏹" : "🐐":
+                "⭐";
+
+print("┍━━━━━━━━━━━━━━━━━━━━━━━⚛━━━━━━━━━━━━━━━━━━━━━━━━┑
+                    Welcome to
+        _                        _          _ _ 
+       | |                      | |        | | |
+   __ _| |_ ___  _ __ ___    ___| |__   ___| | |
+  / _` | __/ _ \| '_ ` _ \  / __| '_ \ / _ \ | |
+ | (_| | || (_) | | | | | | \__ \ | | |  __/ | |
+  \__,_|\__\___/|_| |_| |_| |___/_| |_|\___|_|_|
+                                               
+                  Version " + join(sh@version, "."), "
+       The time is", fmt@magenta(time@str), time-emoji, "on", fmt@cyan(date@str), date-emoji, "
+          This month's zodiac sign is", zodiac-emoji, "
+┕━━━━━━━━━━━━━━━━━━━━━━━⚛━━━━━━━━━━━━━━━━━━━━━━━━┙\n" +
+	widget@add-vertical(
+        widget@add-horizontal(
+                widget@create("Calendar", make-calendar(), 32, 10),
+                widget@create("Cat", rand@choose(CATS), 18, 10)
+        ),
+        todo@widget()));
+
+	nil;
+};
+"neofetch doesn't like non-supported shells and freezes";
+neofetch := welcome;
+
+
+fn detonate() {
+	print("💣💥");
+	nil
+};
+
+fn beep() { print("\a"); nil };
+boop := beep;
+bell := beep;
+
+
+fn prompt(cwd) {
+	fmt@green(to-str(cwd)) + fmt@blue("$ ")
+};
+
+fn incomplete-prompt(cwd) {
+	" " * len(to-str(cwd)) + fmt@red("> ")
+};
+
+
+
+
+fn report(val) {
+	if is-syntax-err(val) {
+		print(fmt@bold(fmt@red("syntax error:")) + to-str(val));
+	} else if is-err(val) {
+		print(fmt@bold(fmt@red("error: ")) + fmt@underline(to-str(val)));
+	} else if not (val = nil or val = 0 or val = "") {
+		print(fmt@bold(" => ") + to-str(val))
+	}
+};
+
+
+fn about() {
+	clear();
+	echo(widget@add-vertical(
+		widget@create("About",
+"        Hello, welcome to " + fmt@cyan("⚛Atom⚛ Shell!") + "
+      Written by: " + fmt@magenta("http://adam-mcdaniel.net") + "\n
+The goal of atom shell is to make shell scriptingmuch more powerful and formal. Most shells don't\noffer powerful libraries or good enough language\nfeatures to make scripting easy.", 50, 10),
+		widget@add-horizontal(
+			widget@create("Features", "Atom offers a (very simple)\nwidget system. The entire\nsplash page is made using it!\nIt supports lambda calculus, macros, and traditional\niterative constructs.\n\nAtom's libraries are also\nextremely extensive.\nThere are libraries for:\n * Date and time\n * OS information\n * Shell information\n * File operations\nAnd much more. Atom even has\nlibraries for things like\ncard games and chess!\n\nAnd remember, if atom can do\nall of that, just imagine\nwhat it could do for your\nbuild scripts.", 30, 25),
+			widget@add-vertical(
+				widget@create("About the Author", "I'm a freshman at\nthe University of\nTennessee🏴󠁵󠁳󠁴󠁮󠁿\nstudying Computer💻\nScience🧪.\n\nI'm extremely \ninterested in\nlanguage design\n& compiler design.\nCheck out my other\nprojects on GitHub:\nadam-mcdaniel", 20, 16),
+				widget@create("Cat", CATS[0], 20, 9)
+			)
+		)
+	));
+
+};
+
+welcome();
