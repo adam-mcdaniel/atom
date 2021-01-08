@@ -365,18 +365,21 @@ They can all be overwritten, if you wish. I would be careful about using macros 
 
 ## Installation
 
+To install download Rust [here](https://www.rust-lang.org/).
+
 #### Development Build
 
 ```bash
+# Download the repo and install from source
 git clone https://github.com/adam-mcdaniel/atom
 cd atom
 cargo install -f --path .
 ```
 
 #### Releases
-To get the current release build, install from [crates.io](https://crates.io/crates/atom).
+To get the current release build, install from [crates.io](https://crates.io/crates/atomsh).
 
 ```bash
-# Also works for updating oakc
-cargo install -f atom
+# Also works for updating atomsh
+cargo install -f atomsh
 ```
