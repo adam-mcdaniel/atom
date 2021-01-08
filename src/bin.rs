@@ -1,4 +1,4 @@
-use atom::{CWD, REPORT, PROMPT, INCOMPLETE_PROMPT, Error, Environment, Value, parse, PRELUDE_FILENAME, HISTORY_FILENAME};
+use atomsh::{CWD, REPORT, PROMPT, INCOMPLETE_PROMPT, Error, Environment, Value, parse, PRELUDE_FILENAME, HISTORY_FILENAME};
 use rustyline::{
     error::ReadlineError,
     Editor, Helper, Modifiers, KeyEvent, Cmd
